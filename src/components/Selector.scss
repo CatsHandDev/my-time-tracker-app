@@ -1,0 +1,50 @@
+.selector-container {
+  margin-bottom: 20px;
+
+  h3 {
+    margin-bottom: 8px;
+    color: #333;
+  }
+
+  .items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .item-button {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &.selected {
+      background-color: #007bff;
+      color: white;
+      border-color: #007bff;
+      font-weight: bold;
+    }
+
+    &:hover:not(.selected) {
+      background-color: #f0f0f0;
+    }
+  }
+
+  .add-button {
+    width: 38px;
+    height: 38px;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    font-size: 20px;
+    color: #555;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: #e0e0e0;
+    }
+  }
+}

@@ -1,0 +1,99 @@
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+    border: none;
+    padding: 0;
+  }
+}
+
+.clear-all-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #c82333;
+  }
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.log-item {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #666;
+
+  .log-date {
+    font-size: 30px;
+  }
+}
+
+.delete-log-button {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background-color: #e9ecef;
+  color: #495057;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 24px;
+  text-align: center;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: #dc3545;
+    color: white;
+  }
+}
+
+.log-worker {
+  padding: 8px;
+  border: 2px solid #666;
+  border-radius: 999px;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.log-body p {
+  margin: 4px 0;
+  font-size: 16px;
+}
+
+.log-task {
+  font-weight: bold;
+}

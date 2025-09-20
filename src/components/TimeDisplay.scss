@@ -8,6 +8,7 @@
   .time-controls {
     display: flex;
     justify-content: space-around;
+    margin-bottom: 20px;
   }
 
   .button-wrapper {
@@ -66,10 +67,10 @@
     .unit-selectors {
       display: flex;
       justify-content: center;
-      gap: 10px;
+      gap: 20px;
 
       button {
-        padding: 4px 12px;
+        padding: 8px 20px;
         border: 1px solid #ccc;
         border-radius: 12px;
         background-color: #fff;
@@ -82,30 +83,5 @@
         }
       }
     }
-  }
-}
-
-.reset-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: end;
-  margin-bottom: 20px;
-}
-
-.reset-button {
-  width: fit-content;
-  height: fit-content;
-  padding: 6px 20px;
-  border: 1px solid #6c757d;
-  border-radius: 20px;
-  background-color: #fff;
-  color: #6c757d;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: #6c757d;
-    color: #fff;
   }
 }

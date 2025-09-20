@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Selector from './components/Selector';
 import TimeDisplay from './components/TimeDisplay';
 import LogList from './components/LogList';
 import type { LogEntry, TimeUnit } from './types';
 import './App.scss';
+import PersonIcon from '@mui/icons-material/Person';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
 const App: React.FC = () => {
   // 状態管理
@@ -17,6 +19,22 @@ const App: React.FC = () => {
   const [endTime, setEndTime] = useState<Date | null>(null);
   const [duration, setDuration] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
   const [timeUnit, setTimeUnit] = useState<TimeUnit>('minutes');
+
+    // 初回レンダリング判定用のref
+  const isFirstRender = useRef(true);
+
+  // 作業者・作業内容が変更されたらタイマーをリセットする
+  useEffect(() => {
+    // 初回レンダリング時は何もしない
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    // タイマー関連の状態のみをリセット
+    setStartTime(null);
+    setEndTime(null);
+  }, [selectedWorker, selectedTask]); // 監視対象
 
   // ローカルストレージへの保存
   useEffect(() => {
@@ -48,7 +66,7 @@ const App: React.FC = () => {
     }
   }, [startTime, endTime]);
 
-
+  // ハンドラ関数
   const handleStart = () => {
     setStartTime(new Date());
     setEndTime(null);
@@ -118,9 +136,14 @@ const App: React.FC = () => {
 
   return (
     <div className="app-container">
-      <h1>作業時間トラッカー</h1>
+      <div className="header">
+        <h1>Meas</h1>
+        <button onClick={handleReset} className="header-reset-button">リセット</button>
+      </div>
+
       <Selector
         title="作業者"
+        icon={<PersonIcon />}
         items={workers}
         selectedItem={selectedWorker}
         onSelectItem={setSelectedWorker}
@@ -128,6 +151,7 @@ const App: React.FC = () => {
       />
       <Selector
         title="作業内容"
+        icon={<AssignmentIcon />}
         items={tasks}
         selectedItem={selectedTask}
         onSelectItem={setSelectedTask}
@@ -142,7 +166,6 @@ const App: React.FC = () => {
         onStart={handleStart}
         onEnd={handleEnd}
         onSetTimeUnit={setTimeUnit}
-        onReset={handleReset}
       />
       <LogList
         logs={logs}

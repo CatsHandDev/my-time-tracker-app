@@ -15,8 +15,31 @@ body {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-h1 {
-  text-align: center;
-  color: #333;
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 24px;
+
+  h1 {
+    text-align: left;
+    color: #333;
+    margin: 0;
+  }
+}
+
+.header-reset-button {
+  padding: 6px 20px;
+  border: 1px solid #6c757d;
+  border-radius: 20px;
+  background-color: #fff;
+  color: #6c757d;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #6c757d;
+    color: #fff;
+  }
 }

@@ -11,7 +11,6 @@ type TimeDisplayProps = {
   onStart: () => void;
   onEnd: () => void;
   onSetTimeUnit: (unit: TimeUnit) => void;
-  onReset: () => void;
 };
 
 const TimeDisplay: React.FC<TimeDisplayProps> = ({
@@ -23,7 +22,6 @@ const TimeDisplay: React.FC<TimeDisplayProps> = ({
   onStart,
   onEnd,
   onSetTimeUnit,
-  onReset
 }) => {
   const formatTime = (date: Date | null) => {
     return date ? date.toLocaleTimeString('ja-JP') : '--:--:--';
@@ -56,19 +54,14 @@ const TimeDisplay: React.FC<TimeDisplayProps> = ({
         </div>
       </div>
 
-      <div style={{display: "flex", justifyContent: "space-around"}}>
-        <div className="duration">
-          <div className="duration-value">
-            {getDurationDisplay()}
-          </div>
-          <div className="unit-selectors">
-            <button onClick={() => onSetTimeUnit('hours')} className={timeUnit === 'hours' ? 'active' : ''}>時</button>
-            <button onClick={() => onSetTimeUnit('minutes')} className={timeUnit === 'minutes' ? 'active' : ''}>分</button>
-            <button onClick={() => onSetTimeUnit('seconds')} className={timeUnit === 'seconds' ? 'active' : ''}>秒</button>
-          </div>
+      <div className="duration">
+        <div className="duration-value">
+          {getDurationDisplay()}
         </div>
-        <div className="reset-wrapper">
-          <button onClick={onReset} className="reset-button">リセット</button>
+        <div className="unit-selectors">
+          <button onClick={() => onSetTimeUnit('hours')} className={timeUnit === 'hours' ? 'active' : ''}>時</button>
+          <button onClick={() => onSetTimeUnit('minutes')} className={timeUnit === 'minutes' ? 'active' : ''}>分</button>
+          <button onClick={() => onSetTimeUnit('seconds')} className={timeUnit === 'seconds' ? 'active' : ''}>秒</button>
         </div>
       </div>
     </div>

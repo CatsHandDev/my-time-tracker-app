@@ -1,9 +1,41 @@
+// src/components/Selector.scss
 .selector-container {
   margin-bottom: 20px;
 
-  h3 {
-    margin-bottom: 8px;
-    color: #333;
+  .selector-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+
+    .MuiSvgIcon-root {
+      color: #555;
+      margin-right: 8px;
+    }
+
+    h3 {
+      margin: 0;
+      color: #333;
+      flex-grow: 1;
+    }
+
+    .add-button {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      line-height: 1;
+
+      .MuiSvgIcon-root {
+        font-size: 32px;
+        color: #555;
+        transition: color 0.2s ease;
+        margin: 0;
+      }
+
+      &:hover .MuiSvgIcon-root {
+        color: #007bff;
+      }
+    }
   }
 
   .items {
@@ -29,22 +61,6 @@
 
     &:hover:not(.selected) {
       background-color: #f0f0f0;
-    }
-  }
-
-  .add-button {
-    width: 38px;
-    height: 38px;
-    border: 1px solid #ccc;
-    border-radius: 50%;
-    background-color: #f0f0f0;
-    cursor: pointer;
-    font-size: 20px;
-    color: #555;
-    transition: background-color 0.2s ease;
-
-    &:hover {
-      background-color: #e0e0e0;
     }
   }
 }

@@ -1,4 +1,3 @@
-// src/components/Selector.scss
 .selector-container {
   margin-bottom: 20px;
 
@@ -44,7 +43,9 @@
     gap: 8px;
   }
 
-  .item-button {
+  .item-wrapper {
+    position: relative;
+    // 3. 非アクティブな場合、スペースはあけない (デフォルトのpadding)
     padding: 8px 16px;
     border: 1px solid #ccc;
     border-radius: 20px;
@@ -52,15 +53,55 @@
     cursor: pointer;
     transition: all 0.2s ease;
 
+    &:hover:not(.selected) {
+      background-color: #f0f0f0;
+    }
+
     &.selected {
       background-color: #007bff;
       color: white;
       border-color: #007bff;
       font-weight: bold;
-    }
+      // 2. アクティブな時、右内側にスペースを確保
+      padding-right: 30px;
 
-    &:hover:not(.selected) {
-      background-color: #f0f0f0;
+      // 1. アクティブな時だけ、子要素の削除ボタンを表示する
+      .delete-item-button {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+        pointer-events: auto;
+      }
+    }
+  }
+
+  .delete-item-button {
+    position: absolute;
+    top: 50%;
+    right: 8px; // ボタンの右端からの距離
+
+    // 3. 非アクティブな場合は表示しない (これがデフォルト状態)
+    opacity: 0;
+    transform: translateY(-50%) scale(0.5); // 少し縮小して消えるアニメーション
+    pointer-events: none; // 透明な状態でもクリックできないようにする
+
+    width: 18px;
+    height: 18px;
+    background-color: #f8f9fa;
+    color: #007bff; // アイコンの色をボタンの背景色に合わせる
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: #dc3545;
+      color: white;
     }
   }
 }

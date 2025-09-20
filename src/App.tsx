@@ -1,138 +1,196 @@
-import React, { useState, useEffect, useRef } from 'react';
+// src/App.tsx
+import React, { useState, useEffect } from 'react';
 import Selector from './components/Selector';
 import TimeDisplay from './components/TimeDisplay';
 import LogList from './components/LogList';
-import type { LogEntry, TimeUnit } from './types';
+import type { LogEntry, TimeUnit, Session } from './types';
 import './App.scss';
 import PersonIcon from '@mui/icons-material/Person';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import HoldingList from './components/HoldingList';
+// localStorageから読み込んだ、Dateが文字列である状態のセッションの型
+type RawSession = Omit<Session, 'initialStartTime' | 'currentStartTime'> & {
+  initialStartTime: string;
+  currentStartTime: string;
+};
 
 const App: React.FC = () => {
   // 状態管理
   const [workers, setWorkers] = useState<string[]>(() => JSON.parse(localStorage.getItem('workers') || '[]'));
   const [tasks, setTasks] = useState<string[]>(() => JSON.parse(localStorage.getItem('tasks') || '[]'));
+  const [sessions, setSessions] = useState<Session[]>(() => {
+    const savedSessions = localStorage.getItem('sessions');
+    if (savedSessions) {
+      return JSON.parse(savedSessions).map((s: RawSession) => ({
+        ...s,
+        initialStartTime: new Date(s.initialStartTime),
+        currentStartTime: new Date(s.currentStartTime),
+      }));
+    }
+    return [];
+  });
   const [logs, setLogs] = useState<LogEntry[]>(() => JSON.parse(localStorage.getItem('logs') || '[]'));
 
   const [selectedWorker, setSelectedWorker] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
-  const [startTime, setStartTime] = useState<Date | null>(null);
-  const [endTime, setEndTime] = useState<Date | null>(null);
-  const [duration, setDuration] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
   const [timeUnit, setTimeUnit] = useState<TimeUnit>('minutes');
 
-    // 初回レンダリング判定用のref
-  const isFirstRender = useRef(true);
-
-  // 作業者・作業内容が変更されたらタイマーをリセットする
-  useEffect(() => {
-    // 初回レンダリング時は何もしない
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-
-    // タイマー関連の状態のみをリセット
-    setStartTime(null);
-    setEndTime(null);
-  }, [selectedWorker, selectedTask]); // 監視対象
+  const activeSession = sessions.find(s => s.status === 'active') || null;
+  const holdingSessions = sessions.filter(s => s.status === 'holding');
 
   // ローカルストレージへの保存
-  useEffect(() => {
-    localStorage.setItem('workers', JSON.stringify(workers));
-  }, [workers]);
+  useEffect(() => { localStorage.setItem('workers', JSON.stringify(workers)); }, [workers]);
+  useEffect(() => { localStorage.setItem('tasks', JSON.stringify(tasks)); }, [tasks]);
+  useEffect(() => { localStorage.setItem('sessions', JSON.stringify(sessions)); }, [sessions]);
+  useEffect(() => { localStorage.setItem('logs', JSON.stringify(logs)); }, [logs]);
 
-  useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }, [tasks]);
+  // 共通のセッション更新ロジック
+  const updateSession = (id: number, updates: Partial<Session>): void => {
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+  };
 
-  useEffect(() => {
-    localStorage.setItem('logs', JSON.stringify(logs));
-  }, [logs]);
-
-  // 経過時間の計算
-  useEffect(() => {
-    if (startTime && endTime) {
-      const diff = endTime.getTime() - startTime.getTime();
-      const seconds = Math.floor(diff / 1000);
-      const minutes = Math.floor(seconds / 60);
-      const hours = Math.floor(minutes / 60);
-      setDuration({
-        hours: hours,
-        minutes: minutes % 60,
-        seconds: seconds % 60,
+  // 進行中のセッションがあれば経過時間を計算して保留状態にする
+  const holdCurrentSession = (): void => {
+    if (activeSession) {
+      const elapsedTime = new Date().getTime() - activeSession.currentStartTime.getTime();
+      updateSession(activeSession.id, {
+        status: 'holding',
+        totalElapsedTime: activeSession.totalElapsedTime + elapsedTime,
       });
-    } else if (!startTime) {
-      setDuration(null);
     }
-  }, [startTime, endTime]);
+  };
 
-  // ハンドラ関数
+  // 新規セッション開始
   const handleStart = () => {
-    setStartTime(new Date());
-    setEndTime(null);
-    setDuration(null);
+    if (!selectedWorker || !selectedTask) return;
+    holdCurrentSession(); // 既存のセッションがあれば保留
+
+    const now = new Date();
+    const newSession: Session = {
+      id: Date.now(),
+      worker: selectedWorker,
+      task: selectedTask,
+      initialStartTime: now,
+      currentStartTime: now,
+      totalElapsedTime: 0,
+      status: 'active',
+    };
+    setSessions(prev => [...prev, newSession]);
   };
 
-  const handleEnd = () => {
-    if (!startTime) return;
-    const currentEndTime = new Date();
-    setEndTime(currentEndTime);
+  // 保留
+  const handleHold = () => {
+    if (!activeSession) return;
+    holdCurrentSession();
+  };
 
-    if (selectedWorker && selectedTask && startTime) {
-        const diff = currentEndTime.getTime() - startTime.getTime();
-        const seconds = Math.floor(diff / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
+  // 完了
+  const handleFinish = () => {
+    if (!activeSession) return;
+    const now = new Date();
+    const elapsedTime = now.getTime() - activeSession.currentStartTime.getTime();
+    // finalElapsedTime は合計の「実働」時間 (ms)
+    const finalElapsedTime = activeSession.totalElapsedTime + elapsedTime;
 
-      const newLog: LogEntry = {
-        id: Date.now(),
-        date: startTime.toLocaleDateString('ja-JP'),
-        worker: selectedWorker,
-        task: selectedTask,
-        startTime: startTime.toLocaleTimeString('ja-JP'),
-        endTime: currentEndTime.toLocaleTimeString('ja-JP'),
-        duration: {
-            hours: hours,
-            minutes: minutes % 60,
-            seconds: seconds % 60,
-        },
-      };
-      setLogs([newLog, ...logs]);
+    // ▼▼▼ 合計保留時間を計算 ▼▼▼
+    const totalSessionTime = now.getTime() - activeSession.initialStartTime.getTime();
+    const totalHoldingTime = totalSessionTime - finalElapsedTime;
+
+    // 実働時間を時分秒に変換
+    const durationSeconds = Math.floor(finalElapsedTime / 1000);
+    const durationMinutes = Math.floor(durationSeconds / 60);
+    const durationHours = Math.floor(durationMinutes / 60);
+
+    // 保留時間を時分秒に変換
+    const holdingSeconds = Math.floor(totalHoldingTime / 1000);
+    const holdingMinutes = Math.floor(holdingSeconds / 60);
+    const holdingHours = Math.floor(holdingMinutes / 60);
+    // ▲▲▲ ▲▲▲
+
+    const timeFormatOptions: Intl.DateTimeFormatOptions = {
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    };
+
+    const newLog: LogEntry = {
+      id: activeSession.id,
+      date: activeSession.initialStartTime.toLocaleDateString('ja-JP'),
+      worker: activeSession.worker,
+      task: activeSession.task,
+      startTime: activeSession.initialStartTime.toLocaleTimeString('ja-JP', timeFormatOptions),
+      endTime: now.toLocaleTimeString('ja-JP', timeFormatOptions),
+      duration: {
+        hours: durationHours,
+        minutes: durationMinutes % 60,
+        seconds: durationSeconds % 60
+      },
+      // ▼▼▼ 計算した保留時間をログに含める ▼▼▼
+      holdingTime: {
+        hours: holdingHours,
+        minutes: holdingMinutes % 60,
+        seconds: holdingSeconds % 60,
+      },
+      // ▲▲▲ ▲▲▲
+      status: '完了',
+    };
+
+    setLogs(prev => [newLog, ...prev]);
+    setSessions(prev => prev.filter(s => s.id !== activeSession.id));
+  };
+
+  // 再開
+  const handleResume = (id: number) => {
+    holdCurrentSession(); // 既存のセッションがあれば保留
+    const sessionToResume = sessions.find(s => s.id === id);
+    if (sessionToResume) {
+      updateSession(id, { status: 'active', currentStartTime: new Date() });
+      setSelectedWorker(sessionToResume.worker);
+      setSelectedTask(sessionToResume.task);
     }
   };
 
-  const addWorker = (name: string) => {
-    if (!workers.includes(name)) {
-      setWorkers([...workers, name]);
-    }
-  };
-
-  const addTask = (name: string) => {
-    if (!tasks.includes(name)) {
-      setTasks([...tasks, name]);
-    }
-  };
-
+  // グローバルリセット
   const handleReset = () => {
     setSelectedWorker(null);
     setSelectedTask(null);
-    setStartTime(null);
-    setEndTime(null);
+  };
+
+  const addWorker = (name: string) => {
+    if (!workers.includes(name)) setWorkers([...workers, name]);
+  };
+
+  const addTask = (name: string) => {
+    if (!tasks.includes(name)) setTasks([...tasks, name]);
+  };
+
+  const handleDeleteWorker = (workerToDelete: string) => {
+    if (window.confirm(`作業者「${workerToDelete}」を削除しますか？`)) {
+      // 選択中の作業者を削除した場合は、選択状態も解除する
+      if (selectedWorker === workerToDelete) {
+        setSelectedWorker(null);
+      }
+      setWorkers(workers.filter(worker => worker !== workerToDelete));
+    }
+  };
+
+  const handleDeleteTask = (taskToDelete: string) => {
+    if (window.confirm(`作業内容「${taskToDelete}」を削除しますか？`)) {
+      // 選択中の作業内容を削除した場合は、選択状態も解除する
+      if (selectedTask === taskToDelete) {
+        setSelectedTask(null);
+      }
+      setTasks(tasks.filter(task => task !== taskToDelete));
+    }
   };
 
   const handleDeleteLog = (id: number) => {
-    if (window.confirm('この記録を削除しますか？')) {
-        setLogs(logs.filter(log => log.id !== id));
-    }
+    if (window.confirm('この記録を削除しますか？')) setLogs(logs.filter(log => log.id !== id));
   };
 
   const handleClearAllLogs = () => {
-    if (window.confirm('本当にすべての記録を削除しますか？')) {
-        setLogs([]);
-    }
+    if (window.confirm('本当にすべての記録を削除しますか？')) setLogs([]);
   };
 
-  const isReady = !!selectedWorker && !!selectedTask;
+
 
   return (
     <div className="app-container">
@@ -140,7 +198,6 @@ const App: React.FC = () => {
         <h1>Meas</h1>
         <button onClick={handleReset} className="header-reset-button">リセット</button>
       </div>
-
       <Selector
         title="作業者"
         icon={<PersonIcon />}
@@ -148,7 +205,9 @@ const App: React.FC = () => {
         selectedItem={selectedWorker}
         onSelectItem={setSelectedWorker}
         onAddItem={addWorker}
+        onDeleteItem={handleDeleteWorker}
       />
+
       <Selector
         title="作業内容"
         icon={<AssignmentIcon />}
@@ -156,19 +215,27 @@ const App: React.FC = () => {
         selectedItem={selectedTask}
         onSelectItem={setSelectedTask}
         onAddItem={addTask}
+        onDeleteItem={handleDeleteTask}
       />
+
       <TimeDisplay
-        startTime={startTime}
-        endTime={endTime}
-        duration={duration}
+        activeSession={activeSession}
+        latestLog={logs[0] || null}
+        selectedWorker={selectedWorker}
+        selectedTask={selectedTask}
         timeUnit={timeUnit}
-        isReady={isReady}
+        isReadyToStart={!!selectedWorker && !!selectedTask}
         onStart={handleStart}
-        onEnd={handleEnd}
+        onHold={handleHold}
+        onFinish={handleFinish}
         onSetTimeUnit={setTimeUnit}
       />
+
+      <HoldingList sessions={holdingSessions} onResume={handleResume} />
+
       <LogList
         logs={logs}
+        timeUnit={timeUnit}
         onDeleteLog={handleDeleteLog}
         onClearAllLogs={handleClearAllLogs}
       />

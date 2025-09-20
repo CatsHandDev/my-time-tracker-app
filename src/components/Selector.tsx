@@ -9,14 +9,21 @@ type SelectorProps = {
   selectedItem: string | null;
   onSelectItem: (item: string) => void;
   onAddItem: (item: string) => void;
+  onDeleteItem: (item: string) => void;
 };
 
-const Selector: React.FC<SelectorProps> = ({ title, icon, items, selectedItem, onSelectItem, onAddItem }) => {
+const Selector: React.FC<SelectorProps> = ({ title, icon, items, selectedItem, onSelectItem, onAddItem, onDeleteItem }) => {
   const handleAddItem = () => {
     const newItem = window.prompt(`${title}を追加してください:`);
     if (newItem && newItem.trim() !== '') {
       onAddItem(newItem.trim());
     }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, item: string) => {
+    // 重要: 親要素の onSelectItem が発火しないようにイベントの伝播を止める
+    e.stopPropagation();
+    onDeleteItem(item);
   };
 
   return (
@@ -30,13 +37,19 @@ const Selector: React.FC<SelectorProps> = ({ title, icon, items, selectedItem, o
       </div>
       <div className="items">
         {items.map((item) => (
-          <button
+          <div
             key={item}
-            className={`item-button ${selectedItem === item ? 'selected' : ''}`}
+            className={`item-wrapper ${selectedItem === item ? 'selected' : ''}`}
             onClick={() => onSelectItem(item)}
           >
             {item}
-          </button>
+            <button
+              className="delete-item-button"
+              onClick={(e) => handleDeleteClick(e, item)}
+            >
+              ×
+            </button>
+          </div>
         ))}
       </div>
     </div>

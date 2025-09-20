@@ -1,7 +1,7 @@
 import React from 'react';
 import type { LogEntry, TimeUnit } from '../types';
 import './LogList.scss';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 type LogListProps = {
   logs: LogEntry[];
@@ -50,7 +50,7 @@ const LogList: React.FC<LogListProps> = ({ logs, onDeleteLog, onClearAllLogs, ti
                 <span className="log-status">{log.status}</span>
                 <span className="log-worker">{log.worker}</span>
                 <button onClick={() => onDeleteLog(log.id)} className="delete-log-button">
-                  <DeleteForeverIcon fontSize="small" />
+                  <DeleteIcon fontSize="small" />
                 </button>
               </div>
               <div className="log-body">

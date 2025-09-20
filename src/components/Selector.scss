@@ -50,6 +50,7 @@
     border: 1px solid #ccc;
     border-radius: 20px;
     background-color: #fff;
+    line-height: 1;
     cursor: pointer;
     transition: all 0.2s ease;
 
@@ -63,7 +64,7 @@
       border-color: #007bff;
       font-weight: bold;
       // 2. アクティブな時、右内側にスペースを確保
-      padding-right: 30px;
+      padding-right: 32px;
 
       // 1. アクティブな時だけ、子要素の削除ボタンを表示する
       .delete-item-button {

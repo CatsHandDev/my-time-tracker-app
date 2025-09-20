@@ -188,6 +188,12 @@ const App: React.FC = () => {
     if (window.confirm('本当にすべての記録を削除しますか？')) setLogs([]);
   };
 
+  const handleDeleteSession = (idToDelete: number) => {
+    if (window.confirm('この保留中のセッションを完全に削除しますか？この操作は取り消せません。')) {
+      setSessions(prevSessions => prevSessions.filter(session => session.id !== idToDelete));
+    }
+  };
+
   const renderHeaderContent = () => {
     switch (activeTab) {
       case 'measurement':
@@ -224,8 +230,24 @@ const App: React.FC = () => {
       <main className="content-area">
         {activeTab === 'measurement' && (
           <>
-            <Selector title="作業者" icon={<PersonIcon />} items={workers} selectedItem={selectedWorker} onSelectItem={setSelectedWorker} onAddItem={addWorker} onDeleteItem={handleDeleteWorker}/>
-            <Selector title="作業内容" icon={<AssignmentIcon />} items={tasks} selectedItem={selectedTask} onSelectItem={setSelectedTask} onAddItem={addTask} onDeleteItem={handleDeleteTask}/>
+            <Selector
+              title="作業者"
+              icon={<PersonIcon />}
+              items={workers}
+              selectedItem={selectedWorker}
+              onSelectItem={setSelectedWorker}
+              onAddItem={addWorker}
+              onDeleteItem={handleDeleteWorker}
+            />
+            <Selector
+              title="作業内容"
+              icon={<AssignmentIcon />}
+              items={tasks}
+              selectedItem={selectedTask}
+              onSelectItem={setSelectedTask}
+              onAddItem={addTask}
+              onDeleteItem={handleDeleteTask}
+            />
             <TimeDisplay
               activeSession={activeSession}
               latestLog={logs[0] || null}
@@ -244,6 +266,7 @@ const App: React.FC = () => {
             sessions={holdingSessions}
             onResume={handleResume}
             timeUnit={holdingTimeUnit}
+            onDelete={handleDeleteSession}
           />
         )}
         {activeTab === 'logs' && (

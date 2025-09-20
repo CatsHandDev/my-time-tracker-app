@@ -51,18 +51,36 @@
     display: flex;
     align-items: center;
     gap: 8px;
-  }
 
-  .elapsed-time {
-    font-family: monospace;
-    font-size: 14px;
-    background-color: #f5f5f5;
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
+    .delete-session-button {
+      width: 34px;
+      height: 27px;
+      padding: 0;
+      border: none;
+      background-color: #e9ecef;
+      color: #495057;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 24px;
+      text-align: center;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-  .resume-icon {
-    color: #4caf50; // 緑色
-    font-size: 28px !important;
+    .elapsed-time {
+      font-family: monospace;
+      font-size: 14px;
+      background-color: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .resume-icon {
+      color: #4caf50; // 緑色
+      font-size: 40px !important;
+    }
   }
 }

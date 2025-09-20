@@ -5,9 +5,9 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
 type LogListProps = {
   logs: LogEntry[];
-  timeUnit: TimeUnit;
   onDeleteLog: (id: number) => void;
   onClearAllLogs: () => void;
+  timeUnit: TimeUnit;
 };
 
 const formatDuration = (
@@ -28,14 +28,15 @@ const formatDuration = (
   }
 };
 
-const LogList: React.FC<LogListProps> = ({ logs, timeUnit, onDeleteLog, onClearAllLogs }) => {
+const LogList: React.FC<LogListProps> = ({ logs, onDeleteLog, onClearAllLogs, timeUnit }) => {
   return (
     <div className="log-list-container">
       <div className="list-header">
-        <h2>作業記録</h2>
-        {logs.length > 0 && (
-          <button onClick={onClearAllLogs} className="clear-all-button">すべて削除</button>
-        )}
+        <div className="list-header-content">
+          {logs.length > 0 && (
+            <button onClick={onClearAllLogs} className="clear-all-button">すべて削除</button>
+          )}
+        </div>
       </div>
 
       {logs.length === 0 ? (

@@ -1,0 +1,20 @@
+// src/components/UnitSelector.scss
+.unit-selectors {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+
+  button {
+    padding: 4px 12px;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    background-color: #fff;
+    cursor: pointer;
+
+    &.active {
+      background-color: #007bff;
+      color: white;
+      border-color: #007bff;
+    }
+  }
+}

@@ -1,4 +1,5 @@
 export type SessionStatus = 'active' | 'holding';
+export type ActiveTab = 'measurement' | 'holding' | 'logs';
 
 export type Session = {
   id: number;

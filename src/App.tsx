@@ -3,11 +3,13 @@ import React, { useState, useEffect } from 'react';
 import Selector from './components/Selector';
 import TimeDisplay from './components/TimeDisplay';
 import LogList from './components/LogList';
-import type { LogEntry, TimeUnit, Session } from './types';
+import type { LogEntry, Session, ActiveTab, TimeUnit } from './types';
 import './App.scss';
 import PersonIcon from '@mui/icons-material/Person';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import HoldingList from './components/HoldingList';
+import BottomNav from './components/BottomNav';
+import UnitSelector from './components/UnitSelector';
 // localStorageから読み込んだ、Dateが文字列である状態のセッションの型
 type RawSession = Omit<Session, 'initialStartTime' | 'currentStartTime'> & {
   initialStartTime: string;
@@ -33,10 +35,15 @@ const App: React.FC = () => {
 
   const [selectedWorker, setSelectedWorker] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
-  const [timeUnit, setTimeUnit] = useState<TimeUnit>('minutes');
-
+  const [activeTab, setActiveTab] = useState<ActiveTab>('measurement');
+  const [holdingTimeUnit, setHoldingTimeUnit] = useState<TimeUnit>('minutes');
+  const [logTimeUnit, setLogTimeUnit] = useState<TimeUnit>('minutes');
   const activeSession = sessions.find(s => s.status === 'active') || null;
   const holdingSessions = sessions.filter(s => s.status === 'holding');
+  const handleReset = () => {
+    setSelectedWorker(null);
+    setSelectedTask(null);
+  };
 
   // ローカルストレージへの保存
   useEffect(() => { localStorage.setItem('workers', JSON.stringify(workers)); }, [workers]);
@@ -92,7 +99,7 @@ const App: React.FC = () => {
     // finalElapsedTime は合計の「実働」時間 (ms)
     const finalElapsedTime = activeSession.totalElapsedTime + elapsedTime;
 
-    // ▼▼▼ 合計保留時間を計算 ▼▼▼
+    // 合計保留時間を計算
     const totalSessionTime = now.getTime() - activeSession.initialStartTime.getTime();
     const totalHoldingTime = totalSessionTime - finalElapsedTime;
 
@@ -105,7 +112,6 @@ const App: React.FC = () => {
     const holdingSeconds = Math.floor(totalHoldingTime / 1000);
     const holdingMinutes = Math.floor(holdingSeconds / 60);
     const holdingHours = Math.floor(holdingMinutes / 60);
-    // ▲▲▲ ▲▲▲
 
     const timeFormatOptions: Intl.DateTimeFormatOptions = {
       hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -123,13 +129,11 @@ const App: React.FC = () => {
         minutes: durationMinutes % 60,
         seconds: durationSeconds % 60
       },
-      // ▼▼▼ 計算した保留時間をログに含める ▼▼▼
       holdingTime: {
         hours: holdingHours,
         minutes: holdingMinutes % 60,
         seconds: holdingSeconds % 60,
       },
-      // ▲▲▲ ▲▲▲
       status: '完了',
     };
 
@@ -146,12 +150,6 @@ const App: React.FC = () => {
       setSelectedWorker(sessionToResume.worker);
       setSelectedTask(sessionToResume.task);
     }
-  };
-
-  // グローバルリセット
-  const handleReset = () => {
-    setSelectedWorker(null);
-    setSelectedTask(null);
   };
 
   const addWorker = (name: string) => {
@@ -190,54 +188,78 @@ const App: React.FC = () => {
     if (window.confirm('本当にすべての記録を削除しますか？')) setLogs([]);
   };
 
-
+  const renderHeaderContent = () => {
+    switch (activeTab) {
+      case 'measurement':
+        return (
+          <>
+            <h1>Meas</h1>
+            <button onClick={handleReset} className="header-reset-button">リセット</button>
+          </>
+        );
+      case 'holding':
+        return (
+          <>
+            <h1>保留中</h1>
+            <UnitSelector timeUnit={holdingTimeUnit} onSetTimeUnit={setHoldingTimeUnit} />
+          </>
+        );
+      case 'logs':
+        return (
+          <>
+            <h1>履歴</h1>
+            <UnitSelector timeUnit={logTimeUnit} onSetTimeUnit={setLogTimeUnit} />
+          </>
+        );
+      default:
+        return <h1>Meas</h1>; // デフォルトのタイトル
+    }
+  };
 
   return (
     <div className="app-container">
-      <div className="header">
-        <h1>Meas</h1>
-        <button onClick={handleReset} className="header-reset-button">リセット</button>
-      </div>
-      <Selector
-        title="作業者"
-        icon={<PersonIcon />}
-        items={workers}
-        selectedItem={selectedWorker}
-        onSelectItem={setSelectedWorker}
-        onAddItem={addWorker}
-        onDeleteItem={handleDeleteWorker}
-      />
+      <header className="page-header">
+        {renderHeaderContent()}
+      </header>
+      <main className="content-area">
+        {activeTab === 'measurement' && (
+          <>
+            <Selector title="作業者" icon={<PersonIcon />} items={workers} selectedItem={selectedWorker} onSelectItem={setSelectedWorker} onAddItem={addWorker} onDeleteItem={handleDeleteWorker}/>
+            <Selector title="作業内容" icon={<AssignmentIcon />} items={tasks} selectedItem={selectedTask} onSelectItem={setSelectedTask} onAddItem={addTask} onDeleteItem={handleDeleteTask}/>
+            <TimeDisplay
+              activeSession={activeSession}
+              latestLog={logs[0] || null}
+              selectedWorker={selectedWorker}
+              selectedTask={selectedTask}
+              isReadyToStart={!!selectedWorker && !!selectedTask}
+              onStart={handleStart}
+              onHold={handleHold}
+              onFinish={handleFinish}
+            />
+          </>
+        )}
 
-      <Selector
-        title="作業内容"
-        icon={<AssignmentIcon />}
-        items={tasks}
-        selectedItem={selectedTask}
-        onSelectItem={setSelectedTask}
-        onAddItem={addTask}
-        onDeleteItem={handleDeleteTask}
-      />
+        {activeTab === 'holding' && (
+          <HoldingList
+            sessions={holdingSessions}
+            onResume={handleResume}
+            timeUnit={holdingTimeUnit}
+          />
+        )}
+        {activeTab === 'logs' && (
+          <LogList
+            logs={logs}
+            onDeleteLog={handleDeleteLog}
+            onClearAllLogs={handleClearAllLogs}
+            timeUnit={logTimeUnit}
+          />
+        )}
+      </main>
 
-      <TimeDisplay
-        activeSession={activeSession}
-        latestLog={logs[0] || null}
-        selectedWorker={selectedWorker}
-        selectedTask={selectedTask}
-        timeUnit={timeUnit}
-        isReadyToStart={!!selectedWorker && !!selectedTask}
-        onStart={handleStart}
-        onHold={handleHold}
-        onFinish={handleFinish}
-        onSetTimeUnit={setTimeUnit}
-      />
-
-      <HoldingList sessions={holdingSessions} onResume={handleResume} />
-
-      <LogList
-        logs={logs}
-        timeUnit={timeUnit}
-        onDeleteLog={handleDeleteLog}
-        onClearAllLogs={handleClearAllLogs}
+      <BottomNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        holdingCount={holdingSessions.length}
       />
     </div>
   );

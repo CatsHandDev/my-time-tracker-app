@@ -1,29 +1,30 @@
 import React from 'react';
-import type { Session } from '../types';
+import type { Session, TimeUnit } from '../types';
 import './HoldingList.scss';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 
 type HoldingListProps = {
   sessions: Session[];
   onResume: (id: number) => void;
+  timeUnit: TimeUnit;
 };
 
-const HoldingList: React.FC<HoldingListProps> = ({ sessions, onResume }) => {
-  if (sessions.length === 0) {
-    return null; // 保留中のセッションがなければ何も表示しない
-  }
-
+const HoldingList: React.FC<HoldingListProps> = ({ sessions, onResume, timeUnit }) => {
   const formatElapsedTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${hours}h ${minutes}m ${seconds}s`;
+    switch (timeUnit) {
+      case 'hours':
+        return `${(totalSeconds / 3600).toFixed(2)} h`;
+      case 'seconds':
+        return `${totalSeconds} s`;
+      case 'minutes':
+      default:
+        return `${(totalSeconds / 60).toFixed(2)} m`;
+    }
   };
 
   return (
     <div className="holding-list-container">
-      <h3>保留中のセッション</h3>
       <ul>
         {sessions.map((session) => (
           <li key={session.id} onClick={() => onResume(session.id)}>

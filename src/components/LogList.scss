@@ -1,7 +1,9 @@
 .list-header {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
   border-bottom: 2px solid #eee;
   padding-bottom: 8px;
   margin-bottom: 16px;
@@ -11,6 +13,13 @@
     margin: 0;
     border: none;
     padding: 0;
+  }
+
+  .list-header-content {
+    width: stretch;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
   }
 }
 

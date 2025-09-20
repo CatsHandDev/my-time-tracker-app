@@ -1,18 +1,17 @@
-import React, {  } from 'react';
-import type { TimeUnit, Session, LogEntry } from '../types';
+import React, { useState } from 'react';
+import type { Session, LogEntry, TimeUnit } from '../types';
 import './TimeDisplay.scss';
+import UnitSelector from './UnitSelector';
 
 type TimeDisplayProps = {
   activeSession: Session | null;
   latestLog: LogEntry | null;
   selectedWorker: string | null;
   selectedTask: string | null;
-  timeUnit: TimeUnit;
   isReadyToStart: boolean;
   onStart: () => void;
   onHold: () => void;
   onFinish: () => void;
-  onSetTimeUnit: (unit: TimeUnit) => void;
 };
 
 const TimeDisplay: React.FC<TimeDisplayProps> = ({
@@ -20,13 +19,13 @@ const TimeDisplay: React.FC<TimeDisplayProps> = ({
   latestLog,
   selectedWorker,
   selectedTask,
-  timeUnit,
   isReadyToStart,
   onStart,
   onHold,
   onFinish,
-  onSetTimeUnit
 }) => {
+  const [timeUnit, setTimeUnit] = useState<TimeUnit>('minutes');
+
   const shouldDisplayLog =
     !activeSession &&
     latestLog &&
@@ -85,11 +84,7 @@ const TimeDisplay: React.FC<TimeDisplayProps> = ({
         <div className="duration-value">
           {getDurationDisplay()}
         </div>
-        <div className="unit-selectors">
-          <button onClick={() => onSetTimeUnit('hours')} className={timeUnit === 'hours' ? 'active' : ''}>時</button>
-          <button onClick={() => onSetTimeUnit('minutes')} className={timeUnit === 'minutes' ? 'active' : ''}>分</button>
-          <button onClick={() => onSetTimeUnit('seconds')} className={timeUnit === 'seconds' ? 'active' : ''}>秒</button>
-        </div>
+        <UnitSelector timeUnit={timeUnit} onSetTimeUnit={setTimeUnit} />
       </div>
     </div>
   );

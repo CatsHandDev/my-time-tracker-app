@@ -78,6 +78,8 @@ body {
 }
 
 .content-area {
+  display: flex;
+  flex-direction: column;
   flex-grow: 1;
   overflow-y: auto;
   padding: 80px 20px;
@@ -107,4 +109,47 @@ body {
     margin: 0;
     font-size: 24px;
   }
+}
+
+.start-button-container {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.start-button {
+  width: 80%;
+  max-width: 300px;
+  padding: 16px 0;
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 28px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #0069d9;
+    box-shadow: 0 6px 12px rgba(0, 123, 255, 0.4);
+  }
+
+  &:disabled {
+    background-color: #a0cfff;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+.memo-input {
+  height: 80px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-top: 20px;
+  resize: vertical;
+  flex: 1;
 }

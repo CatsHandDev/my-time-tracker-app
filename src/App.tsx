@@ -1,15 +1,16 @@
 // src/App.tsx
 import React, { useState, useEffect } from 'react';
 import Selector from './components/Selector';
-import TimeDisplay from './components/TimeDisplay';
 import LogList from './components/LogList';
+import HoldingList from './components/HoldingList';
+import BottomNav from './components/BottomNav';
+import ExecutingList from './components/ExecutingList';
+import UnitSelector from './components/UnitSelector';
 import type { LogEntry, Session, ActiveTab, TimeUnit } from './types';
 import './App.scss';
 import PersonIcon from '@mui/icons-material/Person';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import HoldingList from './components/HoldingList';
-import BottomNav from './components/BottomNav';
-import UnitSelector from './components/UnitSelector';
+
 // localStorageから読み込んだ、Dateが文字列である状態のセッションの型
 type RawSession = Omit<Session, 'initialStartTime' | 'currentStartTime'> & {
   initialStartTime: string;
@@ -38,12 +39,11 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('measurement');
   const [holdingTimeUnit, setHoldingTimeUnit] = useState<TimeUnit>('minutes');
   const [logTimeUnit, setLogTimeUnit] = useState<TimeUnit>('minutes');
-  const activeSession = sessions.find(s => s.status === 'active') || null;
+
+  const activeSessions = sessions.filter(s => s.status === 'active');
   const holdingSessions = sessions.filter(s => s.status === 'holding');
-  const handleReset = () => {
-    setSelectedWorker(null);
-    setSelectedTask(null);
-  };
+
+  const [newMemo, setNewMemo] = useState('');
 
   // ローカルストレージへの保存
   useEffect(() => { localStorage.setItem('workers', JSON.stringify(workers)); }, [workers]);
@@ -56,59 +56,57 @@ const App: React.FC = () => {
     setSessions(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
   };
 
-  // 進行中のセッションがあれば経過時間を計算して保留状態にする
-  const holdCurrentSession = (): void => {
-    if (activeSession) {
-      const elapsedTime = new Date().getTime() - activeSession.currentStartTime.getTime();
-      updateSession(activeSession.id, {
-        status: 'holding',
-        totalElapsedTime: activeSession.totalElapsedTime + elapsedTime,
-      });
-    }
-  };
-
   // 新規セッション開始
   const handleStart = () => {
-    if (!selectedWorker || !selectedTask) return;
-    holdCurrentSession(); // 既存のセッションがあれば保留
+    if (!selectedWorker || !selectedTask) {
+      alert("作業者と作業内容を選択してください。");
+      return;
+    }
 
     const now = new Date();
     const newSession: Session = {
       id: Date.now(),
       worker: selectedWorker,
       task: selectedTask,
+      memo: newMemo,
       initialStartTime: now,
       currentStartTime: now,
       totalElapsedTime: 0,
       status: 'active',
     };
     setSessions(prev => [...prev, newSession]);
+    setNewMemo('');
+    setActiveTab('executing');
   };
 
   // 保留
-  const handleHold = () => {
-    if (!activeSession) return;
-    holdCurrentSession();
+  const handleHold = (id: number) => {
+    const sessionToHold = sessions.find(s => s.id === id);
+    if (sessionToHold) {
+      const elapsedTime = new Date().getTime() - sessionToHold.currentStartTime.getTime();
+      updateSession(id, {
+        status: 'holding',
+        totalElapsedTime: sessionToHold.totalElapsedTime + elapsedTime,
+      });
+    }
   };
 
   // 完了
-  const handleFinish = () => {
-    if (!activeSession) return;
-    const now = new Date();
-    const elapsedTime = now.getTime() - activeSession.currentStartTime.getTime();
-    // finalElapsedTime は合計の「実働」時間 (ms)
-    const finalElapsedTime = activeSession.totalElapsedTime + elapsedTime;
+  const handleFinish = (id: number) => {
+    const sessionToFinish = sessions.find(s => s.id === id);
+    if (!sessionToFinish) return;
 
-    // 合計保留時間を計算
-    const totalSessionTime = now.getTime() - activeSession.initialStartTime.getTime();
+    const now = new Date();
+    const elapsedTime = now.getTime() - sessionToFinish.currentStartTime.getTime();
+    const finalElapsedTime = sessionToFinish.totalElapsedTime + elapsedTime;
+
+    const totalSessionTime = now.getTime() - sessionToFinish.initialStartTime.getTime();
     const totalHoldingTime = totalSessionTime - finalElapsedTime;
 
-    // 実働時間を時分秒に変換
     const durationSeconds = Math.floor(finalElapsedTime / 1000);
     const durationMinutes = Math.floor(durationSeconds / 60);
     const durationHours = Math.floor(durationMinutes / 60);
 
-    // 保留時間を時分秒に変換
     const holdingSeconds = Math.floor(totalHoldingTime / 1000);
     const holdingMinutes = Math.floor(holdingSeconds / 60);
     const holdingHours = Math.floor(holdingMinutes / 60);
@@ -118,11 +116,12 @@ const App: React.FC = () => {
     };
 
     const newLog: LogEntry = {
-      id: activeSession.id,
-      date: activeSession.initialStartTime.toLocaleDateString('ja-JP'),
-      worker: activeSession.worker,
-      task: activeSession.task,
-      startTime: activeSession.initialStartTime.toLocaleTimeString('ja-JP', timeFormatOptions),
+      id: sessionToFinish.id,
+      date: sessionToFinish.initialStartTime.toLocaleDateString('ja-JP'),
+      worker: sessionToFinish.worker,
+      task: sessionToFinish.task,
+      memo: sessionToFinish.memo,
+      startTime: sessionToFinish.initialStartTime.toLocaleTimeString('ja-JP', timeFormatOptions),
       endTime: now.toLocaleTimeString('ja-JP', timeFormatOptions),
       duration: {
         hours: durationHours,
@@ -138,58 +137,59 @@ const App: React.FC = () => {
     };
 
     setLogs(prev => [newLog, ...prev]);
-    setSessions(prev => prev.filter(s => s.id !== activeSession.id));
+    setSessions(prev => prev.filter(s => s.id !== id));
   };
 
   // 再開
   const handleResume = (id: number) => {
-    holdCurrentSession(); // 既存のセッションがあれば保留
     const sessionToResume = sessions.find(s => s.id === id);
     if (sessionToResume) {
       updateSession(id, { status: 'active', currentStartTime: new Date() });
-      setSelectedWorker(sessionToResume.worker);
-      setSelectedTask(sessionToResume.task);
+      setActiveTab('executing'); // ★ 実行中タブに自動で切り替え
     }
+  };
+
+  const handleReset = () => {
+    setSelectedWorker(null);
+    setSelectedTask(null);
+    setNewMemo('');
+  };
+
+  const handleUpdateMemo = (id: number, updatedMemo: string) => {
+    updateSession(id, { memo: updatedMemo });
   };
 
   const addWorker = (name: string) => {
     if (!workers.includes(name)) setWorkers([...workers, name]);
   };
-
   const addTask = (name: string) => {
     if (!tasks.includes(name)) setTasks([...tasks, name]);
   };
-
   const handleDeleteWorker = (workerToDelete: string) => {
     if (window.confirm(`作業者「${workerToDelete}」を削除しますか？`)) {
-      // 選択中の作業者を削除した場合は、選択状態も解除する
       if (selectedWorker === workerToDelete) {
         setSelectedWorker(null);
       }
       setWorkers(workers.filter(worker => worker !== workerToDelete));
     }
   };
-
   const handleDeleteTask = (taskToDelete: string) => {
     if (window.confirm(`作業内容「${taskToDelete}」を削除しますか？`)) {
-      // 選択中の作業内容を削除した場合は、選択状態も解除する
       if (selectedTask === taskToDelete) {
         setSelectedTask(null);
       }
       setTasks(tasks.filter(task => task !== taskToDelete));
     }
   };
-
   const handleDeleteLog = (id: number) => {
     if (window.confirm('この記録を削除しますか？')) setLogs(logs.filter(log => log.id !== id));
   };
-
   const handleClearAllLogs = () => {
     if (window.confirm('本当にすべての記録を削除しますか？')) setLogs([]);
   };
 
   const handleDeleteSession = (idToDelete: number) => {
-    if (window.confirm('この保留中のセッションを完全に削除しますか？この操作は取り消せません。')) {
+    if (window.confirm('このセッションを完全に削除しますか？この操作は取り消せません。')) {
       setSessions(prevSessions => prevSessions.filter(session => session.id !== idToDelete));
     }
   };
@@ -199,10 +199,12 @@ const App: React.FC = () => {
       case 'measurement':
         return (
           <>
-            <h1>Meas</h1>
+            <h1>計測開始</h1>
             <button onClick={handleReset} className="header-reset-button">リセット</button>
           </>
         );
+      case 'executing':
+        return <h1>実行中</h1>;
       case 'holding':
         return (
           <>
@@ -213,12 +215,12 @@ const App: React.FC = () => {
       case 'logs':
         return (
           <>
-            <h1>履歴</h1>
+            <h1>作業記録</h1>
             <UnitSelector timeUnit={logTimeUnit} onSetTimeUnit={setLogTimeUnit} />
           </>
         );
       default:
-        return <h1>Meas</h1>; // デフォルトのタイトル
+        return <h1>Meas</h1>;
     }
   };
 
@@ -248,17 +250,32 @@ const App: React.FC = () => {
               onAddItem={addTask}
               onDeleteItem={handleDeleteTask}
             />
-            <TimeDisplay
-              activeSession={activeSession}
-              latestLog={logs[0] || null}
-              selectedWorker={selectedWorker}
-              selectedTask={selectedTask}
-              isReadyToStart={!!selectedWorker && !!selectedTask}
-              onStart={handleStart}
-              onHold={handleHold}
-              onFinish={handleFinish}
+            <textarea
+              className="memo-input"
+              placeholder="作業に関するメモ (任意)"
+              value={newMemo}
+              onChange={(e) => setNewMemo(e.target.value)}
             />
+            <div className="start-button-container">
+              <button
+                className="start-button"
+                onClick={handleStart}
+                disabled={!selectedWorker || !selectedTask}
+              >
+                作業を開始
+              </button>
+            </div>
           </>
+        )}
+
+        {activeTab === 'executing' && (
+          <ExecutingList
+            sessions={activeSessions}
+            onHold={handleHold}
+            onFinish={handleFinish}
+            onUpdateMemo={handleUpdateMemo}
+            onDelete={handleDeleteSession}
+          />
         )}
 
         {activeTab === 'holding' && (
@@ -267,6 +284,7 @@ const App: React.FC = () => {
             onResume={handleResume}
             timeUnit={holdingTimeUnit}
             onDelete={handleDeleteSession}
+            onUpdateMemo={handleUpdateMemo}
           />
         )}
         {activeTab === 'logs' && (
@@ -282,6 +300,7 @@ const App: React.FC = () => {
       <BottomNav
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        executingCount={activeSessions.length}
         holdingCount={holdingSessions.length}
       />
     </div>

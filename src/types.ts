@@ -1,10 +1,11 @@
 export type SessionStatus = 'active' | 'holding';
-export type ActiveTab = 'measurement' | 'holding' | 'logs';
+export type ActiveTab = 'measurement' | 'executing' | 'holding' | 'logs';
 
 export type Session = {
   id: number;
   worker: string;
   task: string;
+  memo: string;
   initialStartTime: Date;
   currentStartTime: Date;
   totalElapsedTime: number;
@@ -16,6 +17,7 @@ export type LogEntry = {
   date: string;
   worker: string;
   task: string;
+  memo: string;
   startTime: string;
   endTime:string;
   duration: {

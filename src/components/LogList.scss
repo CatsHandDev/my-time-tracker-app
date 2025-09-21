@@ -122,3 +122,34 @@ ul {
   font-size: 10px;
   font-weight: bold;
 }
+
+.memo-text {
+  font-size: 14px;
+  color: #555;
+  margin-top: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  white-space: pre-wrap; // 改行を反映
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f0f0f0;
+  }
+
+  &:empty::before {
+    content: 'メモを追加...';
+    color: #aaa;
+    font-style: italic;
+  }
+}
+
+.memo-editor {
+  width: 100%;
+  height: 60px;
+  margin-top: 8px;
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 14px;
+  resize: vertical;
+}

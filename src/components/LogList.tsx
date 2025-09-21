@@ -66,6 +66,9 @@ const LogList: React.FC<LogListProps> = ({ logs, onDeleteLog, onClearAllLogs, ti
                     保留時間: {log.holdingTime.hours}時間 {log.holdingTime.minutes}分 {log.holdingTime.seconds}秒
                   </p>
                 )}
+                {log.memo && (
+                  <p className="memo-text">{log.memo}</p>
+                )}
               </div>
             </li>
           ))}

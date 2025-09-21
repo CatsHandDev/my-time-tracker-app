@@ -4,14 +4,16 @@ import './BottomNav.scss';
 import TimerIcon from '@mui/icons-material/Timer';
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import HistoryIcon from '@mui/icons-material/History';
+import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
 
 type BottomNavProps = {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
+  executingCount: number;
   holdingCount: number;
 };
 
-const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, holdingCount }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, executingCount, holdingCount }) => {
   return (
     <nav className="bottom-nav">
       <button
@@ -20,6 +22,11 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, holdingC
       >
         <TimerIcon />
         <span>計測</span>
+      </button>
+      <button className={`nav-button ${activeTab === 'executing' ? 'active' : ''}`} onClick={() => setActiveTab('executing')}>
+        <PlaylistPlayIcon />
+        <span>実行中</span>
+        {executingCount > 0 && <span className="badge">{executingCount}</span>}
       </button>
       <button
         className={`nav-button ${activeTab === 'holding' ? 'active' : ''}`}
